@@ -1,21 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>   // for isalpha(), isspace()
+#include <ctype.h>
 
-/*  New projects : Dificulty level : Meduim 
-    2 Mar 2026 : 1. Order detail and login system 
-                 2. Basic GUI 
-            Consider part 3 and 4 as challenge goal but not mandatory for this project : Hard 
-                 3. api to launch in browser
-                 4. Raspberry Pi to host server and connect to database 
-*/
-
-#define MAX_ORDERS    8     // max 8 orders
-#define MAX_NAME      50    // max 50 chars for customer name
-#define MAX_PRODUCT   20    // max 20 chars for product name
-#define MAX_QUANTITY  99    // max quantity
-#define MAX_PRICE     1000  // max price
+#define MAX_ORDERS   8
+#define MAX_NAME     50
+#define MAX_PRODUCT  20
+#define MAX_QUANTITY 99
+#define MAX_PRICE    1000
 
 struct Order_details {
     char  customer_name[MAX_NAME + 1];
@@ -23,198 +15,105 @@ struct Order_details {
     char  product_name[MAX_PRODUCT + 1];
     int   quantity;
     float price;
+    int   type;
 };
 
-// ─────────────────────────────────────────
-// VALIDATION FUNCTIONS
-// ─────────────────────────────────────────
-
-// Check string has no special characters — letters, numbers, spaces only
 int isValidString(const char *str) {
     for (int i = 0; str[i] != '\0'; i++) {
-        if (!isalpha(str[i]) && !isdigit(str[i]) && str[i] != ' ') {
-            return 0;   // invalid character found ❌
-        }
+        if (!isalpha(str[i]) && !isdigit(str[i]) && str[i] != ' ') return 0;
     }
-    return 1;   // all good ✅
+    return 1;
 }
 
-// Validate customer name: max 50 chars, no special chars
 int validateCustomerName(char *name) {
-    if (strlen(name) > MAX_NAME) {
-        printf("❌ Customer name too long! Max %d characters.\n", MAX_NAME);
-        return 0;
-    }
-    if (!isValidString(name)) {
-        printf("❌ Customer name has invalid characters! Letters and numbers only.\n");
-        return 0;
-    }
+    if (strlen(name) > MAX_NAME) { printf("Too long! Max %d chars.\n", MAX_NAME); return 0; }
+    if (!isValidString(name))    { printf("Invalid characters!\n"); return 0; }
     return 1;
 }
 
-// Validate product name: max 20 chars, no special chars
 int validateProductName(char *name) {
-    if (strlen(name) > MAX_PRODUCT) {
-        printf("❌ Product name too long! Max %d characters.\n", MAX_PRODUCT);
-        return 0;
-    }
-    if (!isValidString(name)) {
-        printf("❌ Product name has invalid characters! Letters and numbers only.\n");
-        return 0;
-    }
+    if (strlen(name) > MAX_PRODUCT) { printf("Too long! Max %d chars.\n", MAX_PRODUCT); return 0; }
+    if (!isValidString(name))       { printf("Invalid characters!\n"); return 0; }
     return 1;
 }
 
-// Validate quantity: 1 to 99
 int validateQuantity(int qty) {
-    if (qty < 1 || qty > MAX_QUANTITY) {
-        printf("❌ Quantity must be between 1 and %d.\n", MAX_QUANTITY);
-        return 0;
-    }
+    if (qty < 1 || qty > MAX_QUANTITY) { printf("Quantity must be 1-%d.\n", MAX_QUANTITY); return 0; }
     return 1;
 }
 
-// Validate price: 0.01 to 1000
 int validatePrice(float price) {
-    if (price <= 0 || price > MAX_PRICE) {
-        printf("❌ Price must be between 0.01 and %.2f.\n", (float)MAX_PRICE);
-        return 0;
-    }
+    if (price <= 0 || price > MAX_PRICE) { printf("Price must be 0.01-%d.\n", MAX_PRICE); return 0; }
     return 1;
 }
 
-// ─────────────────────────────────────────
-// INPUT with validation (retry until valid)
-// ─────────────────────────────────────────
 int order_input(struct Order_details *order, int type) {
-
-    int status = 0;
     char buffer[200];
+    int status = 0;
+
+    order->customer_name[0] = '\0';
+    order->product_name[0]  = '\0';
+    order->order_id = 0;
+    order->quantity = 0;
+    order->price    = 0.0f;
+    order->type     = type;
 
     if (type == 1) {
-
-        // Order ID
-        printf("Enter order ID       : ");
-        scanf("%d", &order->order_id);
-
-        // Customer name — retry loop
-        while (1) {
-            printf("Enter customer name  : ");
-            scanf("%49s", buffer);
-            if (validateCustomerName(buffer)) {
-                strcpy(order->customer_name, buffer);
-                break;
-            }
-        }
-
-        // Product name — retry loop
-        while (1) {
-            printf("Enter product name   : ");
-            scanf("%19s", buffer);
-            if (validateProductName(buffer)) {
-                strcpy(order->product_name, buffer);
-                break;
-            }
-        }
-
-        // Quantity — retry loop
-        while (1) {
-            printf("Enter quantity       : ");
-            scanf("%d", &order->quantity);
-            if (validateQuantity(order->quantity)) break;
-        }
-
-        // Price — retry loop
-        while (1) {
-            printf("Enter price          : ");
-            scanf("%f", &order->price);
-            if (validatePrice(order->price)) break;
-        }
-
+        printf("Enter order ID       : "); scanf("%d", &order->order_id);
+        while (1) { printf("Enter customer name  : "); scanf("%49s", buffer);
+            if (validateCustomerName(buffer)) { strcpy(order->customer_name, buffer); break; } }
+        while (1) { printf("Enter product name   : "); scanf("%19s", buffer);
+            if (validateProductName(buffer))  { strcpy(order->product_name,  buffer); break; } }
+        while (1) { printf("Enter quantity       : "); scanf("%d", &order->quantity);
+            if (validateQuantity(order->quantity)) break; }
+        while (1) { printf("Enter price          : "); scanf("%f", &order->price);
+            if (validatePrice(order->price)) break; }
         status = 1;
 
     } else if (type == 2) {
-
-        // Product name — retry loop
-        while (1) {
-            printf("Enter product name   : ");
-            scanf("%19s", buffer);
-            if (validateProductName(buffer)) {
-                strcpy(order->product_name, buffer);
-                break;
-            }
-        }
-
-        printf("Enter order ID       : ");
-        scanf("%d", &order->order_id);
-        order->customer_name[0] = '\0';
-        order->quantity = 0;
-        order->price    = 0.0f;
+        while (1) { printf("Enter product name   : "); scanf("%19s", buffer);
+            if (validateProductName(buffer)) { strcpy(order->product_name, buffer); break; } }
+        printf("Enter order ID       : "); scanf("%d", &order->order_id);
         status = 2;
 
     } else if (type == 3) {
-
-        // Customer name — retry loop
-        while (1) {
-            printf("Enter customer name  : ");
-            scanf("%49s", buffer);
-            if (validateCustomerName(buffer)) {
-                strcpy(order->customer_name, buffer);
-                break;
-            }
-        }
-
-        // Product name — retry loop
-        while (1) {
-            printf("Enter product name   : ");
-            scanf("%19s", buffer);
-            if (validateProductName(buffer)) {
-                strcpy(order->product_name, buffer);
-                break;
-            }
-        }
-
-        order->order_id = 0;
-        order->quantity = 0;
-        order->price    = 0.0f;
+        while (1) { printf("Enter customer name  : "); scanf("%49s", buffer);
+            if (validateCustomerName(buffer)) { strcpy(order->customer_name, buffer); break; } }
+        while (1) { printf("Enter product name   : "); scanf("%19s", buffer);
+            if (validateProductName(buffer))  { strcpy(order->product_name,  buffer); break; } }
         status = 3;
 
     } else {
-        printf("❌ Invalid type! Please enter 1, 2, or 3.\n");
+        printf("Invalid type!\n");
     }
 
     return status;
 }
 
-// ─────────────────────────────────────────
-// PRINT order
-// ─────────────────────────────────────────
 void print_order(struct Order_details *order, int status) {
     if      (status == 1) printf("Type 1 : Full Order\n");
     else if (status == 2) printf("Type 2 : Product + Order ID\n");
     else if (status == 3) printf("Type 3 : Customer + Product\n");
-
     printf("-------------------------\n");
-    printf("Customer Name : %s\n",   order->customer_name);
-    printf("Order ID      : %d\n",   order->order_id);
+    if (strlen(order->customer_name) > 0)
+         printf("Customer Name : %s\n",  order->customer_name);
+    else printf("Customer Name : (not provided)\n");
+    if (order->order_id != 0)
+         printf("Order ID      : %d\n",  order->order_id);
+    else printf("Order ID      : (not provided)\n");
     printf("Product Name  : %s\n",   order->product_name);
-    printf("Quantity      : %d\n",   order->quantity);
-    printf("Price         : %.2f\n", order->price);
+    if (order->quantity != 0) printf("Quantity      : %d\n",   order->quantity);
+    if (order->price    != 0) printf("Price         : %.2f\n", order->price);
     printf("-------------------------\n");
 }
 
-// ─────────────────────────────────────────
-// SAVE to CSV
-// ─────────────────────────────────────────
 void log_csv(struct Order_details *order, int size) {
     FILE *file = fopen("orders.csv", "w");
-    if (file == NULL) {
-        printf("Error opening file!\n");
-        return;
-    }
-    fprintf(file, "Customer Name,Order ID,Product Name,Quantity,Price\n");
+    if (file == NULL) { printf("Error opening file!\n"); return; }
+    fprintf(file, "Type,Customer Name,Order ID,Product Name,Quantity,Price\n");
     for (int i = 0; i < size; i++) {
-        fprintf(file, "%s,%d,%s,%d,%.2f\n",
+        fprintf(file, "%d,%s,%d,%s,%d,%.2f\n",
+            order[i].type,
             order[i].customer_name,
             order[i].order_id,
             order[i].product_name,
@@ -222,12 +121,9 @@ void log_csv(struct Order_details *order, int size) {
             order[i].price);
     }
     fclose(file);
-    printf("Orders saved to orders.csv ✅\n");
+    printf("\nOrders saved to orders.csv\n");
 }
 
-// ─────────────────────────────────────────
-// CHECK csv exists
-// ─────────────────────────────────────────
 int check_csvfile() {
     FILE *file = fopen("orders.csv", "r");
     if (file == NULL) return 0;
@@ -235,38 +131,46 @@ int check_csvfile() {
     return 1;
 }
 
-// ─────────────────────────────────────────
-// VERIFY order
-// ─────────────────────────────────────────
-int verifyOrder(int order_id, const char *customer_name) {
+int getOrderType() {
     FILE *file = fopen("orders.csv", "r");
-    if (file == NULL) {
-        printf("No orders file found!\n");
-        return 0;
-    }
-
+    if (file == NULL) return -1;
     char line[200];
-    fgets(line, sizeof(line), file);   // skip header
+    fgets(line, sizeof(line), file);
+    int type;
+    fscanf(file, "%d,", &type);
+    fclose(file);
+    return type;
+}
 
-    char c_name[50], p_name[50];
-    int  o_id, qty;
+int verifyOrder(int order_id, const char *customer_name, const char *product_name, int type) {
+    FILE *file = fopen("orders.csv", "r");
+    if (file == NULL) { printf("No orders file found!\n"); return 0; }
+
+    char line[300];
+    fgets(line, sizeof(line), file);
+
+    int   t, o_id, qty;
     float price;
+    char  c_name[MAX_NAME + 1], p_name[MAX_PRODUCT + 1];
 
-    while (fscanf(file, "%49[^,],%d,%49[^,],%d,%f\n",
-                  c_name, &o_id, p_name, &qty, &price) == 5) {
-        if (o_id == order_id && strcmp(c_name, customer_name) == 0) {
-            fclose(file);
-            return 1;   // match ✅
+    while (fscanf(file, "%d,%50[^,],%d,%20[^,],%d,%f\n",
+                  &t, c_name, &o_id, p_name, &qty, &price) == 6) {
+        if (type == 1) {
+            if (o_id == order_id && strcmp(c_name, customer_name) == 0)
+                { fclose(file); return 1; }
+        } else if (type == 2) {
+            if (o_id == order_id && strcmp(p_name, product_name) == 0)
+                { fclose(file); return 1; }
+        } else if (type == 3) {
+            if (strcmp(c_name, customer_name) == 0 && strcmp(p_name, product_name) == 0)
+                { fclose(file); return 1; }
         }
     }
 
     fclose(file);
-    return 0;   // no match ❌
+    return 0;
 }
 
-// ─────────────────────────────────────────
-// MAIN
-// ─────────────────────────────────────────
 int main() {
 
     if (check_csvfile() == 0) {
@@ -275,7 +179,6 @@ int main() {
         printf("Welcome to our online shop!\n");
         printf("============================\n");
         fflush(stdout);
-
         sleep(1);
         printf("============================\n");
         printf("      FIRST TIME SETUP      \n");
@@ -283,13 +186,11 @@ int main() {
         fflush(stdout);
 
         int n;
-
-        // Validate order count: max 8
         while (1) {
             printf("How many orders? (max %d) : ", MAX_ORDERS);
             scanf("%d", &n);
             if (n >= 1 && n <= MAX_ORDERS) break;
-            printf("❌ Please enter between 1 and %d orders.\n", MAX_ORDERS);
+            printf("Enter between 1 and %d.\n", MAX_ORDERS);
         }
 
         struct Order_details orders[n];
@@ -297,13 +198,18 @@ int main() {
 
         for (int i = 0; i < n; i++) {
             int type;
-            printf("\nOrder %d — Enter type (1=Full / 2=Product+ID / 3=Customer+Product) : ", i + 1);
+            printf("\n--- Order %d ---\n", i + 1);
+            printf("  1 = Full (ID + Name + Product + Qty + Price)\n");
+            printf("  2 = Product + Order ID only\n");
+            printf("  3 = Customer Name + Product only\n");
+            printf("Choice : ");
             scanf("%d", &type);
             statuses[i] = order_input(&orders[i], type);
         }
 
         printf("\n===== ALL ORDERS =====\n");
         for (int i = 0; i < n; i++) {
+            printf("Order %d\n", i + 1);
             print_order(&orders[i], statuses[i]);
         }
 
@@ -315,27 +221,45 @@ int main() {
         printf("     VERIFY YOUR ORDER      \n");
         printf("============================\n");
 
-        int order_id;
-        char customer_name[MAX_NAME + 1];
+        int savedType = getOrderType();
+
+        int  order_id = 0;
+        char customer_name[MAX_NAME + 1]   = "";
+        char product_name[MAX_PRODUCT + 1] = "";
         char buffer[200];
 
-        printf("Enter your Order ID      : ");
-        scanf("%d", &order_id);
+        printf("\nSystem detected order type %d.\n", savedType);
 
-        // Validate customer name on verify too
-        while (1) {
-            printf("Enter your Customer Name : ");
-            scanf("%49s", buffer);
-            if (validateCustomerName(buffer)) {
-                strcpy(customer_name, buffer);
-                break;
-            }
+        if (savedType == 1) {
+            /* type 1 saved: order_id + customer_name -> ask both */
+            printf("Enter your Order ID      : "); scanf("%d", &order_id);
+            while (1) { printf("Enter your Customer Name : "); scanf("%49s", buffer);
+                if (validateCustomerName(buffer)) { strcpy(customer_name, buffer); break; } }
+
+        } else if (savedType == 2) {
+            /* type 2 saved: order_id + product_name -> ask both, NO customer name */
+            printf("Enter your Order ID      : "); scanf("%d", &order_id);
+            while (1) { printf("Enter your Product Name  : "); scanf("%19s", buffer);
+                if (validateProductName(buffer)) { strcpy(product_name, buffer); break; } }
+
+        } else if (savedType == 3) {
+            /* type 3 saved: customer_name + product_name -> ask both, NO order id */
+            while (1) { printf("Enter your Customer Name : "); scanf("%49s", buffer);
+                if (validateCustomerName(buffer)) { strcpy(customer_name, buffer); break; } }
+            while (1) { printf("Enter your Product Name  : "); scanf("%19s", buffer);
+                if (validateProductName(buffer)) { strcpy(product_name, buffer); break; } }
+
+        } else {
+            printf("Could not read order type from file.\n");
+            return 1;
         }
 
-        if (verifyOrder(order_id, customer_name)) {
-            printf("\n✅ Order verified! Welcome back %s\n", customer_name);
+        if (verifyOrder(order_id, customer_name, product_name, savedType)) {
+            printf("\nOrder verified! Welcome back");
+            if (strlen(customer_name) > 0) printf(" %s", customer_name);
+            printf("!\n");
         } else {
-            printf("\n❌ Order not found! Please check your details.\n");
+            printf("\nOrder not found! Please check your details.\n");
         }
     }
 
