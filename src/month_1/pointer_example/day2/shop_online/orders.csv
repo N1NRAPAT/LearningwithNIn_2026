@@ -1,6 +1,2 @@
-Customer Name,Order ID,Product Name,Quantity,Price
-,1234567,Shampoo,0,0.00
-Ninrapat,222222,Conditioner,10,220.00
-Kwankao,0,Lotion,0,0.00
-Phai,0,Bottle,0,0.00
-Boy,444444,Shave,12,333.00
+Type,Customer Name,Order ID,Product Name,Quantity,Price
+3,Ninrapat,0,Shampoo,0,0.00
