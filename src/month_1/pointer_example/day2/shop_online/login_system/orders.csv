@@ -1,0 +1,9 @@
+Type,Customer Name,Customer Email,Customer Password,Order ID,Product Name,Quantity,Price
+1, , , ,9650,Microphone,0,79.99
+1, , , ,8980,USB_Hub,0,19.99
+3, , , ,4532,USB_Hub,0,19.99
+2, , , ,7921,Charger,0,39.99
+3, , , ,3223,Charger,0,39.99
+1, , , ,8900,Laptop,0,999.99
+3, , , ,7503,Charger,0,39.99
+3, , , ,3425,Mouse,0,29.99
