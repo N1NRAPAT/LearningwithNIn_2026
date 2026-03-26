@@ -135,11 +135,11 @@ float Cal_inverse(struct matrix *m, int rows, int cols)
     float inv_c = -c / det;
     float inv_d = a / det;
 
-    printf("Inverse of the 2x2 matrix starting at (%d, %d):\n", rows, cols);
+    printf("Inverse of the 2x2 matrix starting at (%d, %d): \n", rows, cols);
     printf("\n");
     printf("| %7.2f %7.2f |\n", inv_a, inv_b);
     printf("| %7.2f %7.2f |\n", inv_c, inv_d);
-
+    printf("\n");
     return det;
 }
 
@@ -159,6 +159,7 @@ int main()
 
         // Print the selected matrix values based on user input
         printf("Matrix values:\n");
+        printf("\n");
         for (int i = 0; i < matrixs.nrows; i++)
         {
             printf("| ");
@@ -169,12 +170,12 @@ int main()
             printf("|\n");
         }
         printf("\n");
-        printf("Finding the determinant of the matrix now \n");
+        printf("Finding the determinant of the matrix now! \n");
 
         // Prompt user to input the starting row and column for the 2x2 submatrix
         int start_row, start_col;
-        start_row = Valid_Input("Enter start row: ", 0, 3);
-        start_col = Valid_Input("Enter start col: ", 0, 5);
+        start_row = Valid_Input("Enter row number where to start 2x2 matrix , number need to be between 0 and 3: \n", 0, 3);
+        start_col = Valid_Input("Enter col number where to start 2x2 matrix , number need to be between 0 and 5: \n", 0, 5);
         // Validate the starting row and column input to ensure they are within the bounds of the selected matrix
         if (start_row < 0 || start_row > 3 || start_col < 0 || start_col > 5)
         {
@@ -185,6 +186,7 @@ int main()
             // Calculate and display the determinant of the selected 2x2 submatrix
             float det = Cal_determinant(matrixs, start_row, start_col);
             printf("Determinant of the 2x2 matrix starting at (%d, %d) is: %.2f \n", start_row, start_col, det);
+            printf("\n");
             for (int i = start_row; i < start_row + 2; i++)
             {
                 // display the selected 2x2 submatrix values for clarity
@@ -195,8 +197,9 @@ int main()
                 }
                 printf("|\n");
             }
+
             printf("\n");
-            printf("Finding the inverse of the 2x2 matrix now \n");
+            printf("Finding the inverse of the 2x2 matrix now! \n");
                 if (det == 0)
                 {
                     printf("The matrix is singular and does not have an inverse.\n");
@@ -209,7 +212,7 @@ int main()
         }
 
         // wait until user is decides to continue or not
-        running = Valid_Input("Would you like to continue? (0=no, 1=yes): ", 0, 1);
+        running = Valid_Input("Would you like to input another matrix? (type 1 for yes, 0 for no): ", 0, 1);
     }
 
     return 0;
