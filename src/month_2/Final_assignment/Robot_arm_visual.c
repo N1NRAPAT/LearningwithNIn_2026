@@ -160,3 +160,25 @@ int check_target_reached(struct Target *target, struct Arm arm)
 
     return target->is_reached; 
 }
+
+void Calculate_IK(struct Arm *arm ,struct Target target , float *t_angle1 , float *t_angle2 )
+{
+    float x  = target.x ; 
+    float y  = target.y ; 
+    float L1 = arm->joints[0].length ; 
+    float L2 = arm->joints[1].length ; 
+    float d  = target.distance_to_target ; 
+
+    float cos_angle2 = (d*d - L1*L1 - L2*L2) / (2.0f * L1 * L2) ; // Law of cosines to find angle2
+    
+    if (cos_angle2 > 1.0f) cos_angle2  = 1.0f; // Clamp to valid range
+    if (cos_angle2 < -1.0f) cos_angle2 = -1.0f;
+
+    *t_angle2 = acos(cos_angle2) ; // Angle of joint 2
+    *t_angle1 = atan2(y, x) - atan2(L2 * sin(*t_angle2), L1 + L2 * cos(*t_angle2)) ; // Angle of joint 1
+
+    printf("\nIK solved!\n");
+    printf("Joint 1 target angle: %.2f degrees\n", *t_angle1 * 180.0f / M_PI);
+    printf("Joint 2 target angle: %.2f degrees\n", *t_angle2 * 180.0f / M_PI);
+
+}
