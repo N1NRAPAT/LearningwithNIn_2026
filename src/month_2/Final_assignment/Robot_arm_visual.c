@@ -33,7 +33,6 @@ struct Target
 
 /* --- Function Prototypes --- */
 void Arm_setup(struct Arm *arm) ;
-void select_speed(struct Arm *arm) ;
 float validate_float(char *prompt, float min, float max) ;
 int validate_int(char *prompt, int min, int max) ;
 void get_target_position(struct Target *target, struct Arm arm) ;
@@ -63,7 +62,6 @@ int main()
            target.x, target.y, target.distance_to_target) ;
 
     Calculate_Joint_Angles(&robot_arm, target, &target_angle1, &target_angle2) ;
-    select_speed(&robot_arm) ;
     animate_movement(&robot_arm, target_angle1, target_angle2, target) ;
 
     return 0 ;
@@ -90,26 +88,13 @@ void Arm_setup(struct Arm *arm)
 
     arm->base_x = 0.0f ;
     arm->base_y = 0.0f ;
+    arm->count_steps = 20 ; /* fixed 20 steps for animation */
 
     printf("\n=== ARM SETUP COMPLETE ===\n") ;
     printf("Joint 1 length: %.1f cm | Joint 2 length: %.1f cm\n",
            arm->joints[0].length, arm->joints[1].length) ;
     printf("Max reach: %.1f cm | Min reach: %.1f cm\n",
            arm->max_reach, arm->min_reach) ;
-}
-
-void select_speed(struct Arm *arm)
-{
-    int choice ;
-    printf("\n=== SELECT MOVEMENT SPEED ===\n") ;
-    choice = validate_int("Select speed (1=slow, 2=normal, 3=fast)", 1, 3) ;
-    arm->speed = choice ;
-
-    if(choice == 1)      arm->count_steps = 30 ;
-    else if(choice == 2) arm->count_steps = 20 ;
-    else                 arm->count_steps = 10 ;
-
-    printf("Speed set to %s\n", choice == 1 ? "slow" : choice == 2 ? "normal" : "fast") ;
 }
 
 float validate_float(char *prompt, float min, float max)
@@ -248,14 +233,12 @@ void animate_movement(struct Arm *arm, float target_angle1, float target_angle2,
     int step ;
     float scale ;
 
-    /* Scale grid so arm fills canvas — canvas is 30 units radius, arm max_reach fills it */
     scale = 30.0f / arm->max_reach ;
 
     printf("\n=== ANIMATING ARM MOVEMENT ===\n") ;
 
     for(step = 0; step <= arm->count_steps; step++)
     {
-        /* t goes from 0.0 to 1.0 across all steps */
         t = (float)step / (float)arm->count_steps ;
 
         /* Interpolate angles toward target */
@@ -269,21 +252,34 @@ void animate_movement(struct Arm *arm, float target_angle1, float target_angle2,
         arm->joints[1].x = arm->joints[0].x + arm->joints[1].length * cos(arm->joints[0].angle + arm->joints[1].angle) ;
         arm->joints[1].y = arm->joints[0].y + arm->joints[1].length * sin(arm->joints[0].angle + arm->joints[1].angle) ;
 
-        draw_arm(arm->base_x, arm->base_y,
-                 arm->joints[0].x, arm->joints[0].y,
-                 arm->joints[1].x, arm->joints[1].y,
-                 target.x, target.y, scale,
-                 step, arm->count_steps) ;
+        /* Skip drawing last frame — show summary instead */
+        if(step < arm->count_steps)
+        {
+            draw_arm(arm->base_x, arm->base_y,
+                     arm->joints[0].x, arm->joints[0].y,
+                     arm->joints[1].x, arm->joints[1].y,
+                     target.x, target.y, scale,
+                     step, arm->count_steps) ;
 
-        printf("Step %2d/%d | J1: %6.1f deg | J2: %6.1f deg | Tip: (%.1f, %.1f)\n",
-               step, arm->count_steps,
-               arm->joints[0].angle * 180.0f / M_PI,
-               arm->joints[1].angle * 180.0f / M_PI,
-               arm->joints[1].x, arm->joints[1].y) ;
+            printf("Step %2d/%d | J1: %6.1f deg | J2: %6.1f deg | Tip: (%.1f, %.1f) | Dist to target: %.2f cm\n",
+                   step, arm->count_steps,
+                   arm->joints[0].angle * 180.0f / M_PI,
+                   arm->joints[1].angle * 180.0f / M_PI,
+                   arm->joints[1].x, arm->joints[1].y,
+                   sqrt((arm->joints[1].x - target.x) * (arm->joints[1].x - target.x) +
+                        (arm->joints[1].y - target.y) * (arm->joints[1].y - target.y))) ;
+        }
     }
 
+    /* Final summary instead of graph */
     printf("\n=== MOVEMENT COMPLETE ===\n") ;
+    printf("Target was:        (%.1f, %.1f)\n", target.x, target.y) ;
     printf("Final tip position: (%.1f, %.1f)\n", arm->joints[1].x, arm->joints[1].y) ;
+    printf("Joint 1 final angle: %.2f degrees\n", arm->joints[0].angle * 180.0f / M_PI) ;
+    printf("Joint 2 final angle: %.2f degrees\n", arm->joints[1].angle * 180.0f / M_PI) ;
+    printf("Distance from target: %.3f cm\n",
+           sqrt((arm->joints[1].x - target.x) * (arm->joints[1].x - target.x) +
+                (arm->joints[1].y - target.y) * (arm->joints[1].y - target.y))) ;
 }
 
 void draw_arm(float bx, float by,
@@ -331,7 +327,7 @@ void draw_arm(float bx, float by,
         gx = GX(bx + t * (j1x - bx)) ;
         gy = GY(by + t * (j1y - by)) ;
         if(gx >= 0 && gx < SIZE && gy >= 0 && gy < SIZE)
-            grid[gy][gx] = '=' ;
+            grid[gy][gx] = '@' ;
     }
 
     /* Draw segment 2 — elbow to tip */
@@ -340,7 +336,7 @@ void draw_arm(float bx, float by,
         gx = GX(j1x + t * (j2x - j1x)) ;
         gy = GY(j1y + t * (j2y - j1y)) ;
         if(gx >= 0 && gx < SIZE && gy >= 0 && gy < SIZE)
-            grid[gy][gx] = '-' ;
+            grid[gy][gx] = '#' ;
     }
 
     /* Plot key points on top */
@@ -377,7 +373,7 @@ void draw_arm(float bx, float by,
     }
 
     /* Legend below grid */
-    printf("\n%*sB=base  E=elbow  T=tip  *=target  ===segment1  ---segment2\n",
+    printf("\n%*sB=base  E=elbow  T=tip  *=target  @@@=segment1  ###=segment2\n",
            PAD, "") ;
 
     #undef GX
